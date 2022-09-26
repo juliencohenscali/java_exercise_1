@@ -16,67 +16,66 @@ Part6 not finished little bot
 
 public class Launcher {
 
-    static Console mainConsole = new Console();
+    static Quit quitInstance = new Quit();
+    static Freq freqInstance = new Freq();
+    static Fibo fiboInstance = new Fibo();
+    static Predict predictInstance = new Predict();
+
+    static List<Command> ListCommand = new ArrayList<>();
+
 
     public static void main(String[] args) {
+        boolean found = false;
+        ListCommand.add(quitInstance);
+        ListCommand.add(fiboInstance);
+        ListCommand.add(freqInstance);
+        ListCommand.add(predictInstance);
         System.out.println("This is a welcome message from dev.");
-        var m = new Scanner(System.in);
         String nextInput = "";
         while (!Objects.equals(nextInput, "quit")) {
-
+            var m = new Scanner(System.in);
             System.out.print("Enter command: ");
             nextInput = m.nextLine();
-
-            if (Objects.equals(nextInput, "fibo")) {
-                mainConsole.preFibo();
+            for (Command command : ListCommand) {
+                if (Objects.equals(nextInput, command.name())) {
+                    found = true;
+                    if (!command.run(m)){
+                        break;
+                    };
+                }
             }
-            else if (Objects.equals(nextInput, "comPasOuf"))
-            {
-                mainConsole.comPasOuf();
-            }
-            else if (Objects.equals(nextInput, "quit"))
-            {
-                System.out.println("Exiting!!!!");
-                break;
-            }
-            else
-            {
+            if (!found)
                 System.out.println("Unknown Command!");
-            }
-
         }
         System.exit(1);
-
-
     }
 
 }
 
 
-interface ConsoleInterface {
+interface Command{
 
-    public void comPasOuf();
-    public int fibo(int n);
-    public void preFibo();
     public String name();
 
     public boolean run(Scanner scanner);
 }
 
 
-class Console implements ConsoleInterface {
+class Fibo implements Command {
 
-    private String me = "The Best Dev in the world";
+    private String me = "fibo";
 
 
     public boolean run(Scanner scanner){
-        return scanner.hasNext();
+
+        preFibo(scanner);
+        return true;
     }
     public String name(){
         return me;
     }
-    public void preFibo(){
-        Scanner myObj = new Scanner(System.in);
+
+    public void preFibo(Scanner myObj){
 
         System.out.println("Enter Fibo number: ");
         int nFibo = myObj.nextInt();
@@ -85,20 +84,52 @@ class Console implements ConsoleInterface {
         System.out.println(fibo(nFibo));
     }
 
+    public int fibo(int n) {
+        if(n < 0) {
+            System.out.println("Incorrect input");
+        }
+        else if (n == 0) {
+            return 0;
+        }
+        else if( n == 1 || n == 2) {
+            return 1;
+        }
+        return fibo(n - 1) + fibo(n - 2);
+    }
+}
 
-    public void comPasOuf() {
-        Scanner myObj = new Scanner(System.in);
+
+class Freq implements Command {
+
+    private static String me = "freq";
+
+    public String name(){
+        return me;
+    }
+
+    public boolean run(Scanner myObj){
         System.out.println("ComPasOuf");
         System.out.println("Enter File Path: ");
         String path = (myObj.nextLine());
+        comPasOuf(path);
+        return true;
+    }
+
+    public void comPasOuf(String path) {
         File f = new File(path);
         if (f.exists()){
+            String bigText = "";
             try {
-                String bigText = java.nio.file.Files.readString(Path.of(path));
+                bigText = java.nio.file.Files.readString(Path.of(path));
+            }
+            catch (IOException e) {
+                System.out.println("File Not Found !");
+                System.exit(-1);
+            }
+            if (bigText.length() != 0){
+
                 String[] splitArray = (bigText.toLowerCase().replace("\n","").split(" "));
                 Dictionary<String, Integer> dict = new Hashtable<>();
-
-
                 String greatWord = "";
                 int greatWordNum = 0;
 
@@ -117,31 +148,113 @@ class Console implements ConsoleInterface {
                         }
                     }
                 }
+
                 System.out.println("GreatWord: " + greatWord + "\nGreatWordNum: " + greatWordNum);
-/*
-                        for (int i = 0; i < splitArray.length; i = i + 1) {
-                                dict.put(splitArray[i], dict.get(splitArray[i])+1);
-                        }*/
                 System.out.println(dict);
-
-
                 // /home/saturne/data1.txt
                 // comPasOuf
-            } catch (IOException e) {
-                throw new RuntimeException(e);
             }
+            else
+            {
+                System.out.println("Empty File. Exiting !");
+                System.exit(-1);
+            }
+
         }
     }
-    public int fibo(int n) {
-        if(n < 0) {
-            System.out.println("Incorrect input");
+}
+
+class Predict implements Command{
+
+    private static String me= "predict";
+
+    public String name() {
+        return me;
+    }
+
+    public boolean run(Scanner scanner) {
+        System.out.println("Predict");
+        System.out.println("Enter File Path: ");
+        String path = (scanner.nextLine());
+        predict(path);
+        return false;
+    }
+
+
+    public static void predict(String path){
+        File f = new File(path);
+        if (f.exists()){
+            String bigText = "";
+            try {
+                bigText = java.nio.file.Files.readString(Path.of(path));
+            }
+            catch (IOException e) {
+                System.out.println("Unreadable File:" + e.toString());
+                System.exit(-1);
+            }
+            if (bigText.length() != 0){
+
+                String[] splitArray = (bigText.toLowerCase().replace("\n","").split(" "));
+                Dictionary<String, List<Integer>> dict = new Hashtable<>();
+                Hashtable<Integer, String> dict2 = new Hashtable<>();
+                String greatWord = "";
+                int greatWordNum = 0;
+
+                List<String> keyList = new ArrayList<>();
+                for (int i = 0; i < splitArray.length; i = i+1){
+                    if (!keyList.contains(splitArray[i])) {
+                        List<Integer> tmpList = new ArrayList<>();
+                        tmpList.add(i);
+                        keyList.add(splitArray[i]);
+                        dict2.put(i, splitArray[i]);
+                        dict.put(splitArray[i], tmpList);
+                    }
+                    else
+                    {
+                        List<Integer> getList = dict.get(splitArray[i]);
+                        getList.add(i);
+                        dict.put(splitArray[i], getList);
+                    }
+                }
+                int prevKey = 0;
+                List<Integer> setCopy = new ArrayList<>(dict2.keySet());
+                for (Integer val: setCopy)
+                {
+                    if (val != 0){
+                        if (val != prevKey+1)
+                        {
+                            dict2.put(val-1, splitArray[val-1]);
+                        }
+                        prevKey = val;
+                    }
+                }
+                TreeMap<Integer, String> sortedMap = new TreeMap<Integer, String>(dict2);
+                System.out.println(dict);
+                System.out.println(sortedMap);
+
+            }
+            else
+            {
+                System.out.println("Empty File. Exiting !");
+                System.exit(-1);
+            }
+
         }
-        else if (n == 0) {
-            return 0;
-        }
-        else if( n == 1 || n == 2) {
-            return 1;
-        }
-        return fibo(n - 1) + fibo(n - 2);
+    }
+
+
+}
+
+class Quit implements Command{
+
+    private static String me = "quit";
+
+    public String name() {
+        return me;
+    }
+
+    public boolean run(Scanner scanner) {
+        System.exit(0);
+        return false;
     }
 }
